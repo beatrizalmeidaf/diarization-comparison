@@ -1,6 +1,6 @@
 # Diarization Comparison: PyAnnote vs. SortFormer (NVIDIA)
 
-Esse repositório compara a performance de duas abordagens para diarização de áudio: **PyAnote** e **SortFormer (NVIDIA)**.
+Esse repositório compara a performance de duas abordagens para diarização de áudio: **PyAnnote** e **SortFormer (NVIDIA)**.
 
 ## 📌 Clonando o Repositório
 Para começar, clone esse repositório usando o comando:
