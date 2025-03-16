@@ -75,8 +75,66 @@ class TranscriptionProcessor:
                 
             # Transcrever
             try:
-                result = self.asr_model(temp_path)
-                text = result["text"] if isinstance(result, dict) else result
+                # Lidar com segmentos muito longos
+                duration = segment.end - segment.start
+                if duration > 25:  # Se o segmento for maior que 25 segundos
+                    logger.warning(f"Segmento longo encontrado: {speaker} {segment}. Dividindo em partes menores.")
+                    # Dividir em pedaços de 20 segundos com overlap de 2 segundos
+                    chunk_size = 20
+                    overlap = 2
+                    chunk_texts = []
+                    
+                    for start_time in range(0, int(duration), chunk_size - overlap):
+                        end_time = min(start_time + chunk_size, duration)
+                        if end_time - start_time < 2:  # Segmento muito pequeno para processar
+                            continue
+                            
+                        chunk_audio = AudioProcessor.extract_segment(audio, sr, 
+                                                                   segment.start + start_time, 
+                                                                   segment.start + end_time)
+                        if chunk_audio is None:
+                            continue
+                            
+                        chunk_path = AudioProcessor.save_segment(chunk_audio, sr)
+                        if chunk_path is None:
+                            continue
+                            
+                        # Transcrever o chunk 
+                        chunk_result = None
+                        try:
+                            # Primeiro tenta com as opções mais recentes
+                            try:
+                                chunk_result = self.asr_model(chunk_path, task="transcribe", language="pt")
+                            except TypeError:
+                                # Se falhar, tenta apenas com task="transcribe"
+                                chunk_result = self.asr_model(chunk_path, task="transcribe")
+                        except TypeError:
+                            # Para versões mais antigas que não suportam task
+                            chunk_result = self.asr_model(chunk_path)
+                        
+                        chunk_text = chunk_result["text"] if isinstance(chunk_result, dict) else chunk_result
+                        chunk_texts.append(chunk_text)
+                        
+                        # Limpar arquivo temporário
+                        AudioProcessor.cleanup_temp_file(chunk_path)
+                    
+                    # Combinar os resultados
+                    text = " ".join(chunk_texts)
+                else:
+                    # Transcrição normal para segmentos curtos
+                    result = None
+                    try:
+                        # Primeiro tenta com as opções mais recentes
+                        try:
+                            result = self.asr_model(temp_path, task="transcribe", language="pt")
+                        except TypeError:
+                            # Se falhar, tenta apenas com task="transcribe"
+                            result = self.asr_model(temp_path, task="transcribe")
+                    except TypeError:
+                        # Para versões mais antigas que não suportam task
+                        result = self.asr_model(temp_path)
+                        
+                    text = result["text"] if isinstance(result, dict) else result
                 
                 if speaker not in transcriptions:
                     transcriptions[speaker] = []
