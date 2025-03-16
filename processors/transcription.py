@@ -1,7 +1,3 @@
-"""
-Processamento de transcrição de áudio usando ASR
-"""
-
 import os
 import logging
 from processors.audio_processor import AudioProcessor
@@ -99,18 +95,19 @@ class TranscriptionProcessor:
                         if chunk_path is None:
                             continue
                             
-                        # Transcrever o chunk 
+                        # Transcrever o chunk - Forçando idioma português
                         chunk_result = None
                         try:
-                            # Primeiro tenta com as opções mais recentes
+                            # Tentativa com especificação explícita de português
+                            chunk_result = self.asr_model(chunk_path, language="pt", task="transcribe")
+                        except TypeError as e:
+                            logger.warning(f"Erro ao especificar idioma: {e}. Tentando método alternativo.")
                             try:
-                                chunk_result = self.asr_model(chunk_path, task="transcribe", language="pt")
-                            except TypeError:
-                                # Se falhar, tenta apenas com task="transcribe"
+                                # Tentativa com apenas task="transcribe"
                                 chunk_result = self.asr_model(chunk_path, task="transcribe")
-                        except TypeError:
-                            # Para versões mais antigas que não suportam task
-                            chunk_result = self.asr_model(chunk_path)
+                            except TypeError:
+                                # Para versões mais antigas que não suportam task
+                                chunk_result = self.asr_model(chunk_path)
                         
                         chunk_text = chunk_result["text"] if isinstance(chunk_result, dict) else chunk_result
                         chunk_texts.append(chunk_text)
@@ -121,18 +118,19 @@ class TranscriptionProcessor:
                     # Combinar os resultados
                     text = " ".join(chunk_texts)
                 else:
-                    # Transcrição normal para segmentos curtos
+                    # Transcrição normal para segmentos curtos - Forçando idioma português
                     result = None
                     try:
-                        # Primeiro tenta com as opções mais recentes
+                        # Tentativa com especificação explícita de português
+                        result = self.asr_model(temp_path, language="pt", task="transcribe")
+                    except TypeError as e:
+                        logger.warning(f"Erro ao especificar idioma: {e}. Tentando método alternativo.")
                         try:
-                            result = self.asr_model(temp_path, task="transcribe", language="pt")
-                        except TypeError:
-                            # Se falhar, tenta apenas com task="transcribe"
+                            # Tentativa com apenas task="transcribe"
                             result = self.asr_model(temp_path, task="transcribe")
-                    except TypeError:
-                        # Para versões mais antigas que não suportam task
-                        result = self.asr_model(temp_path)
+                        except TypeError:
+                            # Para versões mais antigas que não suportam task
+                            result = self.asr_model(temp_path)
                         
                     text = result["text"] if isinstance(result, dict) else result
                 
