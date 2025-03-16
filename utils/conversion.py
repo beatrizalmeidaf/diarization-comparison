@@ -33,8 +33,16 @@ def convert_diar_to_annotation(diar_output):
                     start, end, speaker_id = segment[0], segment[1], segment[2]
                     segment_obj = Segment(float(start), float(end))
                     annotation[segment_obj] = f"speaker_{speaker_id}"
+                elif isinstance(segment, str):
+                    # Handle string format like '1.600 4.000 speaker_0'
+                    parts = segment.split()
+                    if len(parts) >= 3:
+                        start = float(parts[0])
+                        end = float(parts[1])
+                        speaker = parts[2]
+                        segment_obj = Segment(start, end)
+                        annotation[segment_obj] = speaker
                     
-
         if len(annotation) == 0:
             if isinstance(diar_output, dict):
                 for speaker_id, segments in diar_output.items():
