@@ -34,14 +34,20 @@ def convert_diar_to_annotation(diar_output):
                     segment_obj = Segment(float(start), float(end))
                     annotation[segment_obj] = f"speaker_{speaker_id}"
                 elif isinstance(segment, str):
-                    parts = segment.split()
+                    # Corrigido: Tratamento adequado para strings com formato "start end speaker"
+                    parts = segment.strip().split()
                     if len(parts) >= 3:
-                        start = float(parts[0])
-                        end = float(parts[1])
-                        speaker = parts[2]
-                        segment_obj = Segment(start, end)
-                        annotation[segment_obj] = speaker
-                    
+                        try:
+                            start = float(parts[0])
+                            end = float(parts[1])
+                            # O terceiro elemento em diante forma o nome do speaker
+                            speaker = " ".join(parts[2:])
+                            segment_obj = Segment(start, end)
+                            annotation[segment_obj] = speaker
+                        except ValueError as ve:
+                            logger.warning(f"Não foi possível converter valores para float: {segment}. Erro: {ve}")
+        
+        # Se ainda não temos anotações e diar_output é um dicionário
         if len(annotation) == 0:
             if isinstance(diar_output, dict):
                 for speaker_id, segments in diar_output.items():
@@ -50,6 +56,17 @@ def convert_diar_to_annotation(diar_output):
                             start, end = segment[0], segment[1]
                             segment_obj = Segment(float(start), float(end))
                             annotation[segment_obj] = f"speaker_{speaker_id}"
+                        elif isinstance(segment, str):
+                            # Adicionando tratamento para segmentos de string dentro de dicionários
+                            parts = segment.strip().split()
+                            if len(parts) >= 2:
+                                try:
+                                    start = float(parts[0])
+                                    end = float(parts[1])
+                                    segment_obj = Segment(start, end)
+                                    annotation[segment_obj] = f"speaker_{speaker_id}"
+                                except ValueError:
+                                    logger.warning(f"Formato de segmento inválido no dicionário: {segment}")
     
     except Exception as e:
         logger.error(f"Erro na conversão do formato NeMo: {e}")
