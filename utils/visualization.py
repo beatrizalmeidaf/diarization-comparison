@@ -26,9 +26,14 @@ def visualize_diarization(audio_path, pyannote_output, sortformer_output, output
         bool: True se bem-sucedido, False caso contrário
     """
     try:
-        # Convertemos a saída para formato de texto e salvamos em um arquivo
-        with open(output_path, 'w') as f:
-            f.write(f"Resultados de diarização para: {os.path.basename(audio_path)}\n\n")
+        
+        audio_basename = os.path.splitext(os.path.basename(audio_path))[0]
+
+        clean_output_path = output_path.replace(os.path.basename(audio_path), f"{audio_basename}-comparison.txt")
+        
+
+        with open(clean_output_path, 'w') as f:
+            f.write(f"Resultados de diarização para: {audio_basename}\n\n")
             
             f.write("PyAnnote Diarization:\n")
             for segment, _, speaker in pyannote_output.itertracks(yield_label=True):
@@ -93,7 +98,7 @@ def plot_metrics_comparison(results, output_dir):
     try:
         plt.figure(figsize=(12, 6))
         metrics_plot = pd.DataFrame({
-            'Arquivo': [r['audio'] for r in results if r['WER'] != 'N/A' and r['WER'] is not None],
+            'Arquivo': [os.path.splitext(r['audio'])[0] for r in results if r['WER'] != 'N/A' and r['WER'] is not None],
             'WER (%)': [float(r['WER'])*100 for r in results if r['WER'] != 'N/A' and r['WER'] is not None],
             'CER (%)': [float(r['CER'])*100 for r in results if r['CER'] != 'N/A' and r['CER'] is not None]
         })
