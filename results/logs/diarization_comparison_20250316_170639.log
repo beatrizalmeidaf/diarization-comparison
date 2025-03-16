@@ -1,0 +1,82 @@
+2025-03-16 17:06:39,787 - root - INFO - Logs serão salvos em: C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\results\logs\diarization_comparison_20250316_170639.log
+2025-03-16 17:06:39,803 - root - INFO - Iniciando pipeline de comparação de diarização...
+2025-03-16 17:06:39,818 - root - INFO - Resultados serão salvos em: C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\results\run_20250316_170639
+2025-03-16 17:06:39,818 - root - INFO - Arquivos de áudio a serem processados: ['audios/audio1.wav', 'audios/audio2.wav', 'audios/audio3.wav', 'audios/audio4.wav', 'audios/audio5.wav']
+2025-03-16 17:06:39,849 - models.pyannote_model - INFO - Carregando modelo PyAnnote pyannote/speaker-diarization-3.0...
+2025-03-16 17:06:44,556 - speechbrain.utils.quirks - INFO - Applied quirks (see `speechbrain.utils.quirks`): [allow_tf32, disable_jit_profiling]
+2025-03-16 17:06:44,556 - speechbrain.utils.quirks - INFO - Excluded quirks specified by the `SB_DISABLE_QUIRKS` environment (comma-separated list): []
+2025-03-16 17:06:52,653 - datasets - INFO - PyTorch version 2.6.0 available.
+2025-03-16 17:06:56,545 - models.pyannote_model - INFO - Modelo PyAnnote carregado com sucesso.
+2025-03-16 17:06:56,545 - models.sortformer_model - INFO - Carregando modelo SORTFormer nvidia/diar_sortformer_4spk-v1...
+2025-03-16 17:07:08,374 - models.sortformer_model - INFO - Modelo SORTFormer carregado com sucesso.
+2025-03-16 17:07:09,114 - processors.transcription - INFO - Carregando modelo ASR openai/whisper-small...
+2025-03-16 17:07:11,704 - processors.transcription - INFO - Modelo ASR carregado com sucesso
+2025-03-16 17:07:11,704 - __main__ - INFO - Processando audios/audio1.wav...
+2025-03-16 17:15:12,000 - models.sortformer_model - ERROR - Erro no processamento com SORTFormer: [enforce fail at alloc_cpu.cpp:115] data. DefaultCPUAllocator: not enough memory: you tried to allocate 2303847200 bytes.
+2025-03-16 17:15:12,845 - models.sortformer_model - ERROR - Traceback (most recent call last):
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\models\sortformer_model.py", line 59, in process
+    predicted_segments = self.model.diarize(audio=audio_path, batch_size=1)
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\torch\utils\_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\nemo\collections\asr\models\sortformer_diar_models.py", line 726, in diarize
+    return super().diarize(
+           ^^^^^^^^^^^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\torch\utils\_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\nemo\collections\asr\parts\mixins\diarization.py", line 174, in diarize
+    for processed_outputs in generator:
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\nemo\collections\asr\parts\mixins\diarization.py", line 260, in diarize_generator
+    pred_outputs = self._diarize_forward(test_batch)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\nemo\collections\asr\models\sortformer_diar_models.py", line 293, in _diarize_forward
+    preds = self.forward(audio_signal=batch[0], audio_signal_length=batch[1])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\nemo\collections\asr\models\sortformer_diar_models.py", line 442, in forward
+    emb_seq, emb_seq_length = self.frontend_encoder(
+                              ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\nemo\collections\asr\models\sortformer_diar_models.py", line 253, in frontend_encoder
+    emb_seq, emb_seq_length = self.encoder(audio_signal=processed_signal, length=processed_signal_length)
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\torch\nn\modules\module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\torch\nn\modules\module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\nemo\core\classes\common.py", line 1081, in wrapped_call
+    outputs = wrapped(*args, **kwargs)
+              ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\nemo\collections\asr\modules\conformer_encoder.py", line 523, in forward
+    return self.forward_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\nemo\collections\asr\modules\conformer_encoder.py", line 601, in forward_internal
+    audio_signal = layer(
+                   ^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\torch\nn\modules\module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\torch\nn\modules\module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\nemo\collections\asr\parts\submodules\conformer_modules.py", line 181, in forward
+    x = self.self_attn(query=x, key=x, value=x, mask=att_mask, pos_emb=pos_emb, cache=cache_last_channel)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\torch\nn\modules\module.py", line 1739, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\torch\nn\modules\module.py", line 1750, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\nemo\collections\asr\parts\submodules\multi_head_attention.py", line 349, in forward
+    out = self.forward_attention(v, scores, mask)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\BeatrizAlmeida\OneDrive\Área de Trabalho\Pessoal\Ermis\diarization-comparison\diar_env\Lib\site-packages\nemo\collections\asr\parts\submodules\multi_head_attention.py", line 138, in forward_attention
+    attn = torch.softmax(scores, dim=-1).masked_fill(mask, 0.0)  # (batch, head, time1, time2)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: [enforce fail at alloc_cpu.cpp:115] data. DefaultCPUAllocator: not enough memory: you tried to allocate 2303847200 bytes.
+
+2025-03-16 17:15:14,898 - __main__ - ERROR - Erro no processamento com SORTFormer: [enforce fail at alloc_cpu.cpp:115] data. DefaultCPUAllocator: not enough memory: you tried to allocate 2303847200 bytes.
+2025-03-16 17:15:14,914 - __main__ - INFO - Processando audios/audio2.wav...
