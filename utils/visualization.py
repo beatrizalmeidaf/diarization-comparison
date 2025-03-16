@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 def visualize_diarization(audio_path, pyannote_output, sortformer_output, output_path):
     """
-    Visualiza os resultados de diarização dos dois modelos
+    Salva os resultados de diarização em um arquivo sem visualização.
     
     Args:
         audio_path: Caminho do arquivo de áudio
@@ -26,27 +26,21 @@ def visualize_diarization(audio_path, pyannote_output, sortformer_output, output
         bool: True se bem-sucedido, False caso contrário
     """
     try:
-        plt.figure(figsize=(15, 8))
+        # Convertemos a saída para formato de texto e salvamos em um arquivo
+        with open(output_path, 'w') as f:
+            f.write(f"Resultados de diarização para: {os.path.basename(audio_path)}\n\n")
+            
+            f.write("PyAnnote Diarization:\n")
+            for segment, _, speaker in pyannote_output.itertracks(yield_label=True):
+                f.write(f"{speaker}: {segment.start:.2f} - {segment.end:.2f}\n")
+            
+            f.write("\nSORTFormer Diarization (NeMo):\n")
+            for segment, _, speaker in sortformer_output.itertracks(yield_label=True):
+                f.write(f"{speaker}: {segment.start:.2f} - {segment.end:.2f}\n")
         
-        # Carregar áudio para obter duração
-        audio, sr = torchaudio.load(audio_path)
-        
-        # Plotar PyAnnote
-        ax1 = plt.subplot(2, 1, 1)
-        pyannote_output.plot(ax=ax1)
-        ax1.set_title('PyAnnote Diarization')
-        
-        # Plotar SORTFormer
-        ax2 = plt.subplot(2, 1, 2)
-        sortformer_output.plot(ax=ax2)
-        ax2.set_title('SORTFormer Diarization (NeMo)')
-        
-        plt.tight_layout()
-        plt.savefig(output_path)
-        plt.close()
         return True
     except Exception as e:
-        logger.error(f"Erro na visualização: {e}")
+        logger.error(f"Erro ao salvar resultados de diarização: {e}")
         return False
 
 def plot_time_comparison(results_df, output_dir):
