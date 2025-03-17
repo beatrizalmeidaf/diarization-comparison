@@ -16,7 +16,7 @@ from utils.logging_config import setup_logging, get_logger
 from utils.visualization import (
     visualize_diarization, 
     plot_time_comparison, 
-    plot_metrics_comparison,
+    plot_diarization_metrics,
     print_summary_statistics
 )
 
@@ -90,17 +90,18 @@ def process_audio_file(audio_file, output_dir, models, processors, options):
         "audio": audio_file,
         "pyannote_time": None,
         "sortformer_time": None,
-        "DER": "N/A",
-        "WER": "N/A",
-        "CER": "N/A",
+        "pyannote_der": "N/A",
+        "sortformer_der": "N/A",
+        "pyannote_jer": "N/A",
+        "sortformer_jer": "N/A",
         "speed_ratio": None
     }
     
     detailed_result = {
         "audio": audio_file,
-        "pyannote": {"time": None, "error": None},
-        "sortformer": {"time": None, "error": None},
-        "comparison": {"DER": "N/A", "WER": "N/A", "CER": "N/A", "speed_ratio": None}
+        "pyannote": {"time": None, "der": "N/A", "jer": "N/A", "error": None},
+        "sortformer": {"time": None, "der": "N/A", "jer": "N/A", "error": None},
+        "comparison": {"speed_ratio": None}
     }
     
     # Processar com PyAnnote
@@ -132,44 +133,28 @@ def process_audio_file(audio_file, output_dir, models, processors, options):
     
     # Avaliar diarização se ambos os modelos foram bem-sucedidos
     if pyannote_output and sortformer_output:
-        metrics = EvaluationProcessor.evaluate_diarization(pyannote_output, sortformer_output)
-        result["DER"] = metrics["DER"]
-        detailed_result["comparison"]["DER"] = metrics["DER"]
-        logger.info(f"DER calculado: {metrics['DER']}")
+        # Calcular DER e JER para PyAnnote (assumindo referência externa ou entre si)
+        pyannote_metrics = EvaluationProcessor.evaluate_diarization_performance(pyannote_output)
+        result["pyannote_der"] = pyannote_metrics.get("DER", "N/A")
+        result["pyannote_jer"] = pyannote_metrics.get("JER", "N/A")
+        detailed_result["pyannote"]["der"] = pyannote_metrics.get("DER", "N/A")
+        detailed_result["pyannote"]["jer"] = pyannote_metrics.get("JER", "N/A")
+        
+        # Calcular DER e JER para SORTFormer
+        sortformer_metrics = EvaluationProcessor.evaluate_diarization_performance(sortformer_output)
+        result["sortformer_der"] = sortformer_metrics.get("DER", "N/A")
+        result["sortformer_jer"] = sortformer_metrics.get("JER", "N/A")
+        detailed_result["sortformer"]["der"] = sortformer_metrics.get("DER", "N/A")
+        detailed_result["sortformer"]["jer"] = sortformer_metrics.get("JER", "N/A")
+        
+        logger.info(f"PyAnnote DER: {result['pyannote_der']}, JER: {result['pyannote_jer']}")
+        logger.info(f"SORTFormer DER: {result['sortformer_der']}, JER: {result['sortformer_jer']}")
         
         # Visualizar resultados
         if not options.get("skip_visualization", False):
             output_image = os.path.join(output_dir, f"{os.path.basename(audio_file)}_comparison.png")
             visualize_diarization(audio_file, pyannote_output, sortformer_output, output_image)
             logger.info(f"Visualização salva em {output_image}")
-    
-    # Transcrição e cálculo de WER/CER
-    if not options.get("skip_transcription", False) and pyannote_output and sortformer_output:
-        if processors.get("transcription") and processors["transcription"].asr_model:
-            logger.info("Transcrevendo segmentos para cálculo de WER/CER...")
-            
-            # Transcrever com PyAnnote
-            pyannote_transcriptions, pyannote_full = processors["transcription"].transcribe_segments(
-                audio_file, pyannote_output)
-            
-            # Transcrever com SORTFormer
-            sortformer_transcriptions, sortformer_full = processors["transcription"].transcribe_segments(
-                audio_file, sortformer_output)
-            
-            # Salvar transcrições
-            with open(os.path.join(output_dir, f"{os.path.basename(audio_file)}_pyannote_transcriptions.json"), 'w') as f:
-                json.dump(pyannote_transcriptions, f, indent=4)
-                
-            with open(os.path.join(output_dir, f"{os.path.basename(audio_file)}_sortformer_transcriptions.json"), 'w') as f:
-                json.dump(sortformer_transcriptions, f, indent=4)
-            
-            # Calcular WER/CER
-            wer_cer_metrics = EvaluationProcessor.calculate_wer_cer(pyannote_full, sortformer_full)
-            result["WER"] = wer_cer_metrics["WER"]
-            result["CER"] = wer_cer_metrics["CER"]
-            detailed_result["comparison"]["WER"] = wer_cer_metrics["WER"]
-            detailed_result["comparison"]["CER"] = wer_cer_metrics["CER"]
-            logger.info(f"WER: {wer_cer_metrics['WER']}, CER: {wer_cer_metrics['CER']}")
     
     return result, detailed_result
 
@@ -224,14 +209,6 @@ def main():
     # Carregar processadores
     processors = {}
     
-    # Transcrição (ASR)
-    if not args.skip_transcription:
-        transcription_processor = TranscriptionProcessor(ASR_MODEL)
-        if transcription_processor.load():
-            processors["transcription"] = transcription_processor
-        else:
-            logger.warning("Falha ao carregar processador de transcrição. Métricas WER/CER não serão calculadas.")
-    
     # Processar cada arquivo de áudio
     results = []
     detailed_results = []
@@ -257,26 +234,33 @@ def main():
         
         # Criar DataFrame mais estruturado para métricas
         metrics_df = pd.DataFrame({
-            'Arquivo': [r['audio'] for r in results],
+            'Arquivo': [os.path.basename(r['audio']) for r in results],
             'PyAnnote_Tempo(s)': [r['pyannote_time'] for r in results],
             'SORTFormer_Tempo(s)': [r['sortformer_time'] for r in results],
             'Razão_Velocidade': [r['speed_ratio'] for r in results],
-            'DER': [r['DER'] for r in results],
-            'WER': [r['WER'] for r in results],
-            'CER': [r['CER'] for r in results]
+            'PyAnnote_DER': [r['pyannote_der'] for r in results],
+            'SORTFormer_DER': [r['sortformer_der'] for r in results],
+            'PyAnnote_JER': [r['pyannote_jer'] for r in results],
+            'SORTFormer_JER': [r['sortformer_jer'] for r in results]
         })
         
         # Salvar CSV com todas as métricas
         metrics_df.to_csv(os.path.join(output_dir, "metricas_completas.csv"), index=False)
         
         # Plotar comparação de tempo
-        plot_time_comparison(results_df, output_dir)
+        time_plot_path = plot_time_comparison(results_df, output_dir)
+        logger.info(f"Gráfico de comparação de tempo salvo em: {time_plot_path}")
         
-        # Plotar métricas WER e CER
-        plot_metrics_comparison(results, output_dir)
+        # Plotar métricas de diarização (DER e JER)
+        metrics_plot_path = plot_diarization_metrics(results, output_dir)
+        logger.info(f"Gráfico de métricas de diarização salvo em: {metrics_plot_path}")
         
         # Imprimir estatísticas resumidas
-        print_summary_statistics(results)
+        summary = print_summary_statistics(results)
+        
+        # Salvar também o sumário em JSON
+        with open(os.path.join(output_dir, "resumo_estatisticas.json"), 'w') as f:
+            json.dump(summary, f, indent=4)
         
         logger.info(f"\nResultados salvos em {output_dir}")
     else:
