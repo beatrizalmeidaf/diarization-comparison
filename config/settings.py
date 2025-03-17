@@ -13,7 +13,7 @@ RESULTS_DIR = os.path.join(BASE_DIR, "results")
 PYANNOTE_MODEL = "pyannote/speaker-diarization-3.0"
 PYANNOTE_AUTH_TOKEN = "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" 
 
-ASR_MODEL = "openai/whisper-medium"
+ASR_MODEL = "openai/whisper-small"
 
 # Configurações de processamento
 SAMPLE_RATE = 16000
