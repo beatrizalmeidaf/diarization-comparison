@@ -5,33 +5,45 @@ from processors.audio_processor import AudioProcessor
 logger = logging.getLogger(__name__)
 
 class TranscriptionProcessor:
-    """Classe para processar transcrições de áudio"""
+    """Classe para processar transcrições de áudio usando o Whisper diretamente"""
     
-    def __init__(self, model_name="openai/whisper-small"):
+    def __init__(self, model_name="openai/whisper-medium"):
         """
         Inicializa o processador de transcrição
         
         Args:
-            model_name: Nome do modelo ASR
+            model_name: Nome do modelo Whisper 
         """
-        self.model_name = model_name
+        
+        if "/" in model_name:
+            self.model_name = model_name.split("/")[-1]
+        else:
+            self.model_name = model_name
+            
+        
+        if "whisper-" in self.model_name:
+            self.model_name = self.model_name.replace("whisper-", "")
+            
         self.asr_model = None
         
     def load(self):
         """
-        Carrega o modelo ASR
+        Carrega o modelo Whisper diretamente
         
         Returns:
             bool: True se carregado com sucesso, False caso contrário
         """
         try:
-            from transformers import pipeline
-            logger.info(f"Carregando modelo ASR {self.model_name}...")
-            self.asr_model = pipeline("automatic-speech-recognition", model=self.model_name)
-            logger.info("Modelo ASR carregado com sucesso")
+            # Importar whisper diretamente
+            import whisper
+            
+            logger.info(f"Carregando modelo Whisper {self.model_name}...")
+            self.asr_model = whisper.load_model(self.model_name)
+            logger.info("Modelo Whisper carregado com sucesso")
             return True
         except Exception as e:
-            logger.error(f"Erro ao carregar modelo ASR: {e}")
+            logger.error(f"Erro ao carregar modelo Whisper: {e}")
+            logger.info("Modelos disponíveis: tiny.en, tiny, base.en, base, small.en, small, medium.en, medium, large-v1, large-v2, large-v3, large")
             return False
             
     def transcribe_segments(self, audio_path, diarization_output):
@@ -46,7 +58,7 @@ class TranscriptionProcessor:
             tuple: (transcriptions, full_transcription)
         """
         if self.asr_model is None:
-            logger.error("Modelo ASR não carregado. Chame load() primeiro.")
+            logger.error("Modelo Whisper não carregado. Chame load() primeiro.")
             return {}, ""
             
         # Carregar áudio
@@ -95,22 +107,14 @@ class TranscriptionProcessor:
                         if chunk_path is None:
                             continue
                             
-                        # Transcrever o chunk - Forçando idioma português
-                        chunk_result = None
+                        # Transcrever o chunk com Whisper forçando português
                         try:
-                            # Tentativa com especificação explícita de português
-                            chunk_result = self.asr_model(chunk_path, language="pt", task="transcribe")
-                        except TypeError as e:
-                            logger.warning(f"Erro ao especificar idioma: {e}. Tentando método alternativo.")
-                            try:
-                                # Tentativa com apenas task="transcribe"
-                                chunk_result = self.asr_model(chunk_path, task="transcribe")
-                            except TypeError:
-                                # Para versões mais antigas que não suportam task
-                                chunk_result = self.asr_model(chunk_path)
-                        
-                        chunk_text = chunk_result["text"] if isinstance(chunk_result, dict) else chunk_result
-                        chunk_texts.append(chunk_text)
+                            # Transcribe com language="pt"
+                            chunk_result = self.asr_model.transcribe(chunk_path, language="pt")
+                            chunk_text = chunk_result["text"]
+                            chunk_texts.append(chunk_text)
+                        except Exception as e:
+                            logger.error(f"Erro na transcrição do chunk: {e}")
                         
                         # Limpar arquivo temporário
                         AudioProcessor.cleanup_temp_file(chunk_path)
@@ -118,21 +122,14 @@ class TranscriptionProcessor:
                     # Combinar os resultados
                     text = " ".join(chunk_texts)
                 else:
-                    # Transcrição normal para segmentos curtos - Forçando idioma português
-                    result = None
+                    # Transcrição normal para segmentos curtos
                     try:
-                        # Tentativa com especificação explícita de português
-                        result = self.asr_model(temp_path, language="pt", task="transcribe")
-                    except TypeError as e:
-                        logger.warning(f"Erro ao especificar idioma: {e}. Tentando método alternativo.")
-                        try:
-                            # Tentativa com apenas task="transcribe"
-                            result = self.asr_model(temp_path, task="transcribe")
-                        except TypeError:
-                            # Para versões mais antigas que não suportam task
-                            result = self.asr_model(temp_path)
-                        
-                    text = result["text"] if isinstance(result, dict) else result
+                        # Transcribe com language="pt"
+                        result = self.asr_model.transcribe(temp_path, language="pt")
+                        text = result["text"]
+                    except Exception as e:
+                        logger.error(f"Erro na transcrição: {e}")
+                        text = ""
                 
                 if speaker not in transcriptions:
                     transcriptions[speaker] = []
