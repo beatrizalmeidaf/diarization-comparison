@@ -85,7 +85,7 @@ def process_audio_file(audio_file, output_dir, models, processors, options):
         logger.error(f"Arquivo {audio_file} não encontrado. Pulando.")
         return None
     
-    # Resultados para este arquivo
+    # Resultados para esse arquivo
     result = {
         "audio": audio_file,
         "pyannote_time": None,
@@ -133,19 +133,20 @@ def process_audio_file(audio_file, output_dir, models, processors, options):
     
     # Avaliar diarização se ambos os modelos foram bem-sucedidos
     if pyannote_output and sortformer_output:
-        # Calcular DER e JER para PyAnnote (assumindo referência externa ou entre si)
-        pyannote_metrics = EvaluationProcessor.evaluate_diarization_performance(pyannote_output)
-        result["pyannote_der"] = pyannote_metrics.get("DER", "N/A")
-        result["pyannote_jer"] = pyannote_metrics.get("JER", "N/A")
-        detailed_result["pyannote"]["der"] = pyannote_metrics.get("DER", "N/A")
-        detailed_result["pyannote"]["jer"] = pyannote_metrics.get("JER", "N/A")
-        
-        # Calcular DER e JER para SORTFormer
-        sortformer_metrics = EvaluationProcessor.evaluate_diarization_performance(sortformer_output)
+        # Calcular métricas usando cada modelo como referência para o outro
+        # Usar PyAnnote como referência para avaliar SORTFormer
+        sortformer_metrics = EvaluationProcessor.evaluate_diarization_performance(sortformer_output, pyannote_output)
         result["sortformer_der"] = sortformer_metrics.get("DER", "N/A")
         result["sortformer_jer"] = sortformer_metrics.get("JER", "N/A")
         detailed_result["sortformer"]["der"] = sortformer_metrics.get("DER", "N/A")
         detailed_result["sortformer"]["jer"] = sortformer_metrics.get("JER", "N/A")
+        
+        # Usar SORTFormer como referência para avaliar PyAnnote
+        pyannote_metrics = EvaluationProcessor.evaluate_diarization_performance(pyannote_output, sortformer_output)
+        result["pyannote_der"] = pyannote_metrics.get("DER", "N/A")
+        result["pyannote_jer"] = pyannote_metrics.get("JER", "N/A")
+        detailed_result["pyannote"]["der"] = pyannote_metrics.get("DER", "N/A")
+        detailed_result["pyannote"]["jer"] = pyannote_metrics.get("JER", "N/A")
         
         logger.info(f"PyAnnote DER: {result['pyannote_der']}, JER: {result['pyannote_jer']}")
         logger.info(f"SORTFormer DER: {result['sortformer_der']}, JER: {result['sortformer_jer']}")
