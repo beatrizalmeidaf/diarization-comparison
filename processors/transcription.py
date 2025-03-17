@@ -7,7 +7,7 @@ logger = logging.getLogger(__name__)
 class TranscriptionProcessor:
     """Classe para processar transcrições de áudio usando o Whisper diretamente"""
     
-    def __init__(self, model_name="openai/whisper-medium"):
+    def __init__(self, model_name="openai/whisper-small"):
         """
         Inicializa o processador de transcrição
         
