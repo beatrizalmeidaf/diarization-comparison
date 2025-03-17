@@ -43,22 +43,20 @@ python main.py
 ## Adicionando Arquivos de Áudio
 Os arquivos de áudio a serem analisados devem ser inseridos na pasta `audios/`.
 
-Em seguida, edite o arquivo `config/settings.py`, especificando os caminhos dos arquivos na variável `AUDIO_FILES`. Exemplo:
-
-```python
-AUDIO_FILES = [
-    "audios/audio1.wav",
-    "audios/audio2.wav"
-]
-```
-
 ---
 
 ## Análise de Resultados
+
 Os resultados da diarização são armazenados em logs e podem ser analisados através das métricas implementadas no código. A comparação entre os modelos inclui:
 
-- Precisão da diarização
-- Tempo de execução
-- Eficiência na separação de falantes
+- **Precisão da diarização**: Avaliação da qualidade da separação dos falantes.  
+- **Tempo de execução**: Mede a velocidade do processamento da diarização.  
+- **Eficiência na separação de falantes**: Avalia o quão bem os falantes são identificados corretamente.  
+
+### Métricas de Avaliação
+
+- **DER (Diarization Error Rate)**: Mede o erro na diarização considerando falantes incorretamente atribuídos, falantes ausentes e falsas detecções. Quanto menor o DER, melhor a diarização.  
+- **JER (Jaccard Error Rate)**: Avalia o erro na identificação de segmentos falados, comparando com a referência. Penaliza sobreposição e atribuições erradas. Quanto menor, melhor.  
+
 
 
